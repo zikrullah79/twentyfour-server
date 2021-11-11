@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"twentyfour.com/server/model"
 	"twentyfour.com/server/play"
-	"twentyfour.com/server/services"
 )
 
 func main() {
@@ -38,9 +37,10 @@ func main() {
 		play.Join(c, room)
 	})
 	// router.POST("/create")
-	cards := services.GetCardSet()
-	cards = services.Shuffle(cards)
-	c4rd, cards := services.Get4Card(*cards)
-	log.Printf("4 cards : %v , current card set : %v", c4rd, cards)
+	// cards := services.GetCardSet()
+	// cards = services.Shuffle(cards)
+	// c4rd, cards := services.Get4Card(*cards)
+	// log.Printf("4 cards : %v , current card set : %v", c4rd, cards)
+	// log.Println(model.FalseUnresolve)
 	router.Run()
 }
