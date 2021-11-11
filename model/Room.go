@@ -13,7 +13,7 @@ type Room struct {
 	Unregister chan *Player
 }
 
-func newRoom() *Room {
+func NewRoom() *Room {
 	return &Room{
 		Id:         uint(rand.Uint64()),
 		Status:     0,

@@ -24,6 +24,7 @@ func (u *Player) ReadPlayerUpdate() {
 			log.Println(err)
 			break
 		}
+		// log.Println(msg)
 		u.Room.Broadcast <- bytes.TrimSpace(msg)
 	}
 }
@@ -37,6 +38,7 @@ func (u *Player) WritePlayerUpdate() {
 	for {
 		select {
 		case msg, ok := <-u.Send:
+			// log.Printf("%s", msg)
 			if !ok {
 				u.Conn.NextWriter(websocket.CloseMessage)
 				return
