@@ -41,14 +41,20 @@ func Join(c *gin.Context, r *model.Room) {
 	}
 
 	// defer conn.Close()
+	playerType := model.RoomMaster
 
+	if len(r.Players) > 0 {
+		log.Println("roomMember")
+		playerType = model.RoomMember
+	}
 	newPlayer := &model.Player{
-		Id:    uint(rand.Uint64()),
-		State: model.PlayerJoining,
-		Point: 0,
-		Conn:  conn,
-		Room:  r,
-		Send:  make(chan []byte, 256),
+		Id:         uint(rand.Uint64()),
+		PlayerType: playerType,
+		State:      model.PlayerJoining,
+		Point:      0,
+		Conn:       conn,
+		Room:       r,
+		Send:       make(chan []byte, 256),
 	}
 	// log.Printf("%v room", &r)
 	log.Printf("%v room", r.Players)

@@ -7,23 +7,32 @@ const (
 
 const (
 	EndGame = iota
-	PlayerPointing
-	LastPlayer
 	KeyCorrect
 	KeyUncorrect
-	KnowTheKey
-	Unresolve
 	FalseUnresolve
 	PointIncrease
 	AFK
 	PlayerJoining
 )
-
 const (
 	NewQuestion = iota
-	GameStarted
 	GameStopped
 	GameNotStarted
+)
+const (
+	PlayerPointing = iota
+	ClaimUnresolve
+	StartGame
+	ClaimSolution
+	AnswerTheQuestion
+)
+
+const (
+	PlayerPointed = iota
+	LastPlayer
+	KnowTheSolution
+	Thinking
+	Unresolve
 )
 
 type LogHistory struct {
@@ -35,6 +44,6 @@ type GameLogData struct {
 	Question []*int
 }
 type PlayerLogData struct {
-	Id  int64
+	Id  uint
 	Key int
 }

@@ -9,13 +9,19 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	RoomMember = iota
+	RoomMaster
+)
+
 type Player struct {
-	Id    uint
-	State int
-	Point float64
-	Conn  *websocket.Conn
-	Room  *Room
-	Send  chan []byte
+	Id         uint
+	State      int
+	PlayerType int
+	Point      float64
+	Conn       *websocket.Conn
+	Room       *Room
+	Send       chan []byte
 }
 
 func (u *Player) ReadPlayerUpdate() {
@@ -32,9 +38,30 @@ func (u *Player) ReadPlayerUpdate() {
 			continue
 		}
 		switch p.Type {
-		case GameStarted:
-			log.Println("Game Started")
-
+		case StartGame:
+			if u.PlayerType != RoomMaster || u.Room.Status == NewQuestion {
+				continue
+			}
+			u.Room.Status = NewQuestion
+			log.Printf("Game Started by %v", u.PlayerType)
+		case PlayerPointing:
+			if p.PlayerLogData == nil || u.State != LastPlayer {
+				continue
+			}
+			if p, ok := u.Room.Players[p.PlayerLogData.Id]; !ok {
+				p.State = PlayerPointed
+			}
+		case ClaimSolution:
+			// if u.State != Thinking {
+			// 	continue
+			// }
+			u.State = KnowTheSolution
+		case ClaimUnresolve:
+			u.State = Unresolve
+		case AnswerTheQuestion:
+			if u.State != PlayerPointed {
+				continue
+			}
 		}
 		// log.Println(p.Type)
 		// log.Println(msg)
@@ -85,4 +112,13 @@ func (u *Player) WritePlayerUpdate() {
 			}
 		}
 	}
+}
+
+func FindPlayer(Id uint, players map[*Player]bool) *Player {
+	for k, v := range players {
+		if k.Id == Id && v == true {
+			return k
+		}
+	}
+	return nil
 }
