@@ -21,6 +21,9 @@ const (
 
 const (
 	NewQuestion = iota
+	GameStarted
+	GameStopped
+	GameNotStarted
 )
 
 type LogHistory struct {

@@ -12,29 +12,31 @@ import (
 func main() {
 
 	router := gin.Default()
-	rooms := make(map[uint]*model.Room)
+	rooms := make(map[uint64]*model.Room)
 	router.GET("/join/:roomid", func(c *gin.Context) {
 		rid, err := strconv.Atoi(c.Param("roomid"))
 		if err != nil {
 			log.Println("room id invalid")
 			return
 		}
-		currRoom, ok := rooms[uint(rid)]
+		room, ok := rooms[uint64(rid)]
 		if !ok {
 			log.Println("room id not found")
 			return
 		}
-		play.Join(c, currRoom)
+		play.Join(c, room)
+
 		// c.Param("username")
 		// play.Join(c, room)
 	})
 	router.GET("/create", func(c *gin.Context) {
 
 		room := model.NewRoom()
+		go room.Run()
 		rooms[room.Id] = room
 		log.Println(room.Id)
-		go room.Run()
 		play.Join(c, room)
+		// play.Join(c, room)
 	})
 	// router.POST("/create")
 	// cards := services.GetCardSet()

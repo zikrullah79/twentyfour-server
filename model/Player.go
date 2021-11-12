@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -24,6 +25,18 @@ func (u *Player) ReadPlayerUpdate() {
 			log.Println(err)
 			break
 		}
+		var p = &LogHistory{}
+		err = json.Unmarshal(msg, p)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		switch p.Type {
+		case GameStarted:
+			log.Println("Game Started")
+
+		}
+		// log.Println(p.Type)
 		// log.Println(msg)
 		u.Room.Broadcast <- bytes.TrimSpace(msg)
 	}
@@ -50,8 +63,15 @@ func (u *Player) WritePlayerUpdate() {
 				return
 			}
 			w.Write(msg)
-
+			// var p = &LogHistory{}
+			// err = json.Unmarshal(msg, p)
+			// if err != nil {
+			// 	log.Println(err)
+			// 	// break
+			// }
+			// log.Println(p)
 			que := len(u.Send)
+			// log.Println(que)
 			for i := 0; i < que; i++ {
 				w.Write([]byte("/n"))
 				w.Write(<-u.Send)
