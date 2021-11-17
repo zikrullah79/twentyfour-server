@@ -43,7 +43,10 @@ func (u *Player) ReadPlayerUpdate() {
 				continue
 			}
 			u.Room.Status = NewQuestion
-			log.Printf("Game Started by %v", u.PlayerType)
+			SetStateToAllUser(WaitingCard, u.Room)
+			u.Room.Broadcast <- bytes.TrimSpace(msg)
+			// log.Printf("Game Started by %v", u.PlayerType)
+
 		case PlayerPointing:
 			if p.PlayerLogData == nil || u.State != LastPlayer {
 				continue
@@ -65,7 +68,7 @@ func (u *Player) ReadPlayerUpdate() {
 		}
 		// log.Println(p.Type)
 		// log.Println(msg)
-		u.Room.Broadcast <- bytes.TrimSpace(msg)
+		// u.Room.Broadcast <- bytes.TrimSpace(msg)
 	}
 }
 
@@ -114,11 +117,8 @@ func (u *Player) WritePlayerUpdate() {
 	}
 }
 
-func FindPlayer(Id uint, players map[*Player]bool) *Player {
-	for k, v := range players {
-		if k.Id == Id && v == true {
-			return k
-		}
+func SetStateToAllUser(state int, room *Room) {
+	for _, v := range room.Players {
+		v.State = state
 	}
-	return nil
 }

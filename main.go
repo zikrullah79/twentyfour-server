@@ -44,5 +44,6 @@ func main() {
 	// c4rd, cards := services.Get4Card(*cards)
 	// log.Printf("4 cards : %v , current card set : %v", c4rd, cards)
 	// log.Println(model.FalseUnresolve)
+	// log.Print(services.EvaluateFormula("(8 * 3) * 1 * 2"))
 	router.Run()
 }

@@ -60,6 +60,9 @@ func (r *Room) Run() {
 
 		case logplay := <-r.Broadcast:
 			log.Printf("%v logplay", logplay)
+			if r.Status == NewQuestion {
+				log.Print("yuhuu")
+			}
 			for _, player := range r.Players {
 				select {
 				case player.Send <- logplay:

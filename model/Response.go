@@ -13,6 +13,7 @@ const (
 	PointIncrease
 	AFK
 	PlayerJoining
+	PostQuestion
 )
 const (
 	NewQuestion = iota
@@ -33,6 +34,7 @@ const (
 	KnowTheSolution
 	Thinking
 	Unresolve
+	WaitingCard
 )
 
 type LogHistory struct {
