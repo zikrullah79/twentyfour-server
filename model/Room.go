@@ -34,32 +34,15 @@ func (r *Room) Run() {
 	var card *[]int
 	card = services.GetCardSet()
 	services.Shuffle(card)
+	var pointedPlayer *Player
+	var lastPlayer *Player
+	var roomStatus int
 	for {
-		// log.Println("p")
 		select {
 		case player := <-r.Register:
-
-			// r.Players[player] = true
 			if len(r.Players) < 8 {
-
 				r.Players[player.Id] = player
 			}
-			// log.Println(len(r.Players))
-			// log.Println(player)
-			// if len(r.Players) >= 2 {
-			// 	Gamelog := &LogHistory{GameStarted, nil, nil}
-			// 	res, err := json.Marshal(Gamelog)
-			// 	if err != nil {
-			// 		log.Println(err.Error())
-			// 		// return
-			// 	}
-			// 	log.Printf("%v : marshal", string(res))
-			// 	for players := range r.Players {
-			// 		players.Send <- bytes.TrimSpace(res)
-			// 	}
-
-			// r.Broadcast <- bytes.TrimSpace([]byte("dddd"))
-			// }
 		case player := <-r.Unregister:
 			if _, ok := r.Players[player.Id]; ok {
 				delete(r.Players, player.Id)
@@ -71,17 +54,26 @@ func (r *Room) Run() {
 			var logs []interface{}
 			switch logplay.Type {
 			case StartGame:
+				if len(r.Players) < 2 {
+					continue
+				}
 				r.Status = NewQuestion
-				SetStateToAllUser(WaitingCard, r)
+				roomStatus = WaitingPlayerClaim
+				setStateToAllUser(WaitingCard, r)
 				rand4Card, currCard := services.Get4Card(*card)
 				card = currCard
 				logs = append(logs, &GameResponseNewQuestion{PostQuestion, rand4Card})
-
 			case PlayerPointing:
-				if logplay.PlayerLogData.Id == 0 {
+				if logplay.PlayerLogData.Id == 0 || r.Status != LastPlayerFound {
+					continue
+				}
+				if _, ok := r.Players[logplay.PlayerLogData.Id]; !ok {
 					continue
 				}
 				r.Players[logplay.PlayerLogData.Id].State = PlayerPointed
+				pointedPlayer = r.Players[logplay.PlayerLogData.Id]
+				roomStatus = WaitingPointedPlayer
+				logs = append(logs, &GameResponsePointingPlayer{PostPointedPlayer, pointedPlayer.Id})
 			case ClaimSolution:
 				if logplay.PlayerLogData.Id == 0 {
 					continue
@@ -94,6 +86,9 @@ func (r *Room) Run() {
 
 				if last, count := checkLastPlayer(r); count == 1 {
 					r.Players[last].State = LastPlayer
+					lastPlayer = r.Players[last]
+					// r.Status = LastPlayerFound
+					roomStatus = LastPlayerFound
 					logs = append(logs, &GameResponseLastPlayer{GetLastPlayer, last})
 				}
 			case AnswerTheQuestion:
@@ -104,12 +99,23 @@ func (r *Room) Run() {
 				if r.Players[logplay.PlayerLogData.Id].State != LastPlayer {
 					continue
 				}
-				keyType := KeyCorrect
+				// keyType := KeyCorrect
 				if services.EvaluateFormula(logplay.PlayerLogData.Key) != nil {
-					keyType = KeyUncorrect
-
+					// keyType = KeyUncorrect
+					pointedPlayer.Point -= 4
+					logs = append(logs, &GameResponsePointIncrease{PointIncrease, pointedPlayer.Id})
+				} else {
+					lastPlayer.Point -= 4
+					logs = append(logs, &GameResponsePointIncrease{PointIncrease, lastPlayer.Id})
 				}
-				logs = append(logs, &GameResponseWrongAnswer{keyType, logplay.PlayerLogData.Id})
+				// logs = append(logs, &GameResponseWrongAnswer{keyType, logplay.PlayerLogData.Id})
+
+				r.Status = NewQuestion
+				roomStatus = WaitingPlayerClaim
+				setStateToAllUser(WaitingCard, r)
+				rand4Card, currCard := services.Get4Card(*card)
+				card = currCard
+				logs = append(logs, &GameResponseNewQuestion{PostQuestion, rand4Card})
 			case ClaimUnresolve:
 			default:
 				continue
@@ -121,6 +127,7 @@ func (r *Room) Run() {
 			if err != nil {
 				continue
 			}
+			r.Status = roomStatus
 			broadcastMessage(res, r)
 			// for _, player := range r.Players {
 			// 	select {
@@ -160,3 +167,18 @@ func broadcastMessage(msg []byte, r *Room) {
 
 	}
 }
+
+func setStateToAllUser(state int, room *Room) {
+	for _, v := range room.Players {
+		v.State = state
+	}
+}
+
+// func getLastPlayer(r *Room) *Player {
+// 	for _, v := range r.Players {
+// 		if v.State == LastPlayer {
+// 			return v
+// 		}
+// 	}
+// 	return nil
+// }

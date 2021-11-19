@@ -16,11 +16,15 @@ const (
 	PlayerKnowSolution
 	PostQuestion
 	GetLastPlayer
+	PostPointedPlayer
+	WaitingPointedPlayer
 )
 const (
 	NewQuestion = iota
 	GameStopped
 	GameNotStarted
+	LastPlayerFound
+	WaitingPlayerClaim
 )
 const (
 	PlayerPointing = iota
@@ -66,6 +70,14 @@ type GameResponseLastPlayer struct {
 	Id   uint
 }
 type GameResponseKnowSolution struct {
+	Type int
+	Id   uint
+}
+type GameResponsePointingPlayer struct {
+	Type int
+	Id   uint
+}
+type GameResponsePointIncrease struct {
 	Type int
 	Id   uint
 }

@@ -38,7 +38,7 @@ func (u *Player) ReadPlayerUpdate() {
 		}
 		switch p.Type {
 		case StartGame:
-			if u.PlayerType != RoomMaster || u.Room.Status == NewQuestion {
+			if u.PlayerType != RoomMaster || u.Room.Status != GameNotStarted {
 				continue
 			}
 			// SetStateToAllUser(WaitingCard, u.Room)
@@ -50,14 +50,18 @@ func (u *Player) ReadPlayerUpdate() {
 			if p.PlayerLogData == nil || u.State != LastPlayer {
 				continue
 			}
-			if p, ok := u.Room.Players[p.PlayerLogData.Id]; !ok {
-				p.State = PlayerPointed
-			}
+			u.Room.Broadcast <- &UserRequest{PlayerPointing, &PlayerLogData{p.PlayerLogData.Id, ""}, nil}
+			// if p, ok := u.Room.Players[p.PlayerLogData.Id]; !ok {
+			// 	p.State = PlayerPointed
+			// }
 		case ClaimSolution:
 			// if u.State != Thinking {
 			// 	continue
 			// }
 			// u.State = KnowTheSolution
+			if u.Room.Status != WaitingPlayerClaim || u.State == Thinking {
+				continue
+			}
 			u.Room.Broadcast <- &UserRequest{ClaimSolution, &PlayerLogData{u.Id, ""}, nil}
 		case ClaimUnresolve:
 			u.State = Unresolve
@@ -114,11 +118,5 @@ func (u *Player) WritePlayerUpdate() {
 				return
 			}
 		}
-	}
-}
-
-func SetStateToAllUser(state int, room *Room) {
-	for _, v := range room.Players {
-		v.State = state
 	}
 }
