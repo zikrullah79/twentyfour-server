@@ -69,6 +69,8 @@ func (u *Player) ReadPlayerUpdate() {
 			if u.State != PlayerPointed {
 				continue
 			}
+
+			u.Room.Broadcast <- &UserRequest{AnswerTheQuestion, &PlayerLogData{u.Id, p.PlayerLogData.Key}, nil}
 		}
 		// log.Println(p.Type)
 		// log.Println(msg)

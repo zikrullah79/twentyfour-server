@@ -92,11 +92,11 @@ func (r *Room) Run() {
 					logs = append(logs, &GameResponseLastPlayer{GetLastPlayer, last})
 				}
 			case AnswerTheQuestion:
-				if logplay.PlayerLogData.Id == 0 && logplay.PlayerLogData.Key == "" {
+				if (logplay.PlayerLogData.Id == 0 && logplay.PlayerLogData.Key == "") || r.Status != WaitingPointedPlayer {
 					continue
 				}
 
-				if r.Players[logplay.PlayerLogData.Id].State != LastPlayer {
+				if r.Players[logplay.PlayerLogData.Id].State != PlayerPointed {
 					continue
 				}
 				// keyType := KeyCorrect
