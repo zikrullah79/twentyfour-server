@@ -68,20 +68,15 @@ func (r *Room) Run() {
 
 		case logplay := <-r.Broadcast:
 			log.Printf("%v logplay", logplay)
-			var msg []byte
+			var logs []interface{}
 			switch logplay.Type {
 			case StartGame:
 				r.Status = NewQuestion
 				SetStateToAllUser(WaitingCard, r)
 				rand4Card, currCard := services.Get4Card(*card)
 				card = currCard
-				log := &GameResponseNewQuestion{PostQuestion, rand4Card}
-				res, err := json.Marshal(log)
-				if err != nil {
-					continue
-					// return
-				}
-				msg = res
+				logs = append(logs, &GameResponseNewQuestion{PostQuestion, rand4Card})
+
 			case PlayerPointing:
 				if logplay.PlayerLogData.Id == 0 {
 					continue
@@ -92,21 +87,15 @@ func (r *Room) Run() {
 					continue
 				}
 
-				last, count := checkLastPlayer(r)
-				var k interface{}
-				if count > 1 {
+				if _, count := checkLastPlayer(r); count > 1 {
 					r.Players[logplay.PlayerLogData.Id].State = KnowTheSolution
-					k = &GameResponseKnowSolution{PlayerKnowSolution, logplay.PlayerLogData.Id}
-				} else {
+					logs = append(logs, &GameResponseKnowSolution{PlayerKnowSolution, logplay.PlayerLogData.Id})
+				}
+
+				if last, count := checkLastPlayer(r); count == 1 {
 					r.Players[last].State = LastPlayer
-					k = &GameResponseLastPlayer{GetLastPlayer, last}
+					logs = append(logs, &GameResponseLastPlayer{GetLastPlayer, last})
 				}
-				res, err := json.Marshal(k)
-				if err != nil {
-					continue
-					// return
-				}
-				msg = res
 			case AnswerTheQuestion:
 				if logplay.PlayerLogData.Id == 0 && logplay.PlayerLogData.Key == "" {
 					continue
@@ -115,32 +104,34 @@ func (r *Room) Run() {
 				if r.Players[logplay.PlayerLogData.Id].State != LastPlayer {
 					continue
 				}
-				log := &GameResponseWrongAnswer{KeyCorrect, logplay.PlayerLogData.Id}
+				keyType := KeyCorrect
 				if services.EvaluateFormula(logplay.PlayerLogData.Key) != nil {
-					log = &GameResponseWrongAnswer{KeyUncorrect, logplay.PlayerLogData.Id}
+					keyType = KeyUncorrect
 
 				}
-				res, err := json.Marshal(log)
-				if err != nil {
-					continue
-					// return
-				}
-				msg = res
+				logs = append(logs, &GameResponseWrongAnswer{keyType, logplay.PlayerLogData.Id})
 			case ClaimUnresolve:
 			default:
 				continue
 			}
-
-			for _, player := range r.Players {
-				select {
-				case player.Send <- msg:
-				default:
-					// log.Println("uhuy")
-					close(player.Send)
-					delete(r.Players, player.Id)
-				}
-
+			if len(logs) < 1 {
+				continue
 			}
+			res, err := json.Marshal(logs)
+			if err != nil {
+				continue
+			}
+			broadcastMessage(res, r)
+			// for _, player := range r.Players {
+			// 	select {
+			// 	case player.Send <- msg:
+			// 	default:
+			// 		// log.Println("uhuy")
+			// 		close(player.Send)
+			// 		delete(r.Players, player.Id)
+			// 	}
+
+			// }
 		}
 	}
 }
@@ -156,4 +147,16 @@ func checkLastPlayer(r *Room) (uint, int) {
 		return last[0], len(last)
 	}
 	return 0, len(last)
+}
+func broadcastMessage(msg []byte, r *Room) {
+	for _, player := range r.Players {
+		select {
+		case player.Send <- msg:
+		default:
+			// log.Println("uhuy")
+			close(player.Send)
+			delete(r.Players, player.Id)
+		}
+
+	}
 }
