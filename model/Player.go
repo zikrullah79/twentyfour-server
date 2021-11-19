@@ -1,7 +1,6 @@
 package model
 
 import (
-	"bytes"
 	"encoding/json"
 	"log"
 	"time"
@@ -31,7 +30,7 @@ func (u *Player) ReadPlayerUpdate() {
 			log.Println(err)
 			break
 		}
-		var p = &LogHistory{}
+		var p = &UserRequest{}
 		err = json.Unmarshal(msg, p)
 		if err != nil {
 			log.Println(err)
@@ -42,9 +41,9 @@ func (u *Player) ReadPlayerUpdate() {
 			if u.PlayerType != RoomMaster || u.Room.Status == NewQuestion {
 				continue
 			}
-			u.Room.Status = NewQuestion
-			SetStateToAllUser(WaitingCard, u.Room)
-			u.Room.Broadcast <- bytes.TrimSpace(msg)
+			// SetStateToAllUser(WaitingCard, u.Room)
+
+			u.Room.Broadcast <- &UserRequest{StartGame, nil, nil}
 			// log.Printf("Game Started by %v", u.PlayerType)
 
 		case PlayerPointing:
@@ -58,7 +57,8 @@ func (u *Player) ReadPlayerUpdate() {
 			// if u.State != Thinking {
 			// 	continue
 			// }
-			u.State = KnowTheSolution
+			// u.State = KnowTheSolution
+			u.Room.Broadcast <- &UserRequest{ClaimSolution, &PlayerLogData{u.Id, ""}, nil}
 		case ClaimUnresolve:
 			u.State = Unresolve
 		case AnswerTheQuestion:

@@ -13,7 +13,9 @@ const (
 	PointIncrease
 	AFK
 	PlayerJoining
+	PlayerKnowSolution
 	PostQuestion
+	GetLastPlayer
 )
 const (
 	NewQuestion = iota
@@ -37,7 +39,7 @@ const (
 	WaitingCard
 )
 
-type LogHistory struct {
+type UserRequest struct {
 	Type            int
 	PlayerLogData   *PlayerLogData
 	GamePlayLogData *GameLogData
@@ -47,5 +49,23 @@ type GameLogData struct {
 }
 type PlayerLogData struct {
 	Id  uint
-	Key int
+	Key string
+}
+
+type GameResponseNewQuestion struct {
+	Type     int
+	Question *[]int
+}
+
+type GameResponseWrongAnswer struct {
+	Type int
+	Id   uint
+}
+type GameResponseLastPlayer struct {
+	Type int
+	Id   uint
+}
+type GameResponseKnowSolution struct {
+	Type int
+	Id   uint
 }

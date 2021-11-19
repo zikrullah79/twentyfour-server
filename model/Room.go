@@ -1,31 +1,39 @@
 package model
 
 import (
+	"encoding/json"
 	"log"
 	"math/rand"
+
+	"twentyfour.com/server/services"
 )
 
 type Room struct {
-	Id         uint64
-	Status     int
-	Players    map[uint]*Player
-	Broadcast  chan []byte
+	Id      uint64
+	Status  int
+	Players map[uint]*Player
+	// Broadcast  chan []byte
+	Broadcast  chan *UserRequest
 	Register   chan *Player
 	Unregister chan *Player
 }
 
 func NewRoom() *Room {
 	return &Room{
-		Id:         rand.Uint64(),
-		Status:     GameNotStarted,
-		Players:    make(map[uint]*Player),
-		Broadcast:  make(chan []byte),
+		Id:      rand.Uint64(),
+		Status:  GameNotStarted,
+		Players: make(map[uint]*Player),
+		// Broadcast:  make(chan []byte),
+		Broadcast:  make(chan *UserRequest),
 		Register:   make(chan *Player),
 		Unregister: make(chan *Player),
 	}
 }
 
 func (r *Room) Run() {
+	var card *[]int
+	card = services.GetCardSet()
+	services.Shuffle(card)
 	for {
 		// log.Println("p")
 		select {
@@ -60,12 +68,72 @@ func (r *Room) Run() {
 
 		case logplay := <-r.Broadcast:
 			log.Printf("%v logplay", logplay)
-			if r.Status == NewQuestion {
-				log.Print("yuhuu")
+			var msg []byte
+			switch logplay.Type {
+			case StartGame:
+				r.Status = NewQuestion
+				SetStateToAllUser(WaitingCard, r)
+				rand4Card, currCard := services.Get4Card(*card)
+				card = currCard
+				log := &GameResponseNewQuestion{PostQuestion, rand4Card}
+				res, err := json.Marshal(log)
+				if err != nil {
+					continue
+					// return
+				}
+				msg = res
+			case PlayerPointing:
+				if logplay.PlayerLogData.Id == 0 {
+					continue
+				}
+				r.Players[logplay.PlayerLogData.Id].State = PlayerPointed
+			case ClaimSolution:
+				if logplay.PlayerLogData.Id == 0 {
+					continue
+				}
+
+				last, count := checkLastPlayer(r)
+				var k interface{}
+				if count > 1 {
+					r.Players[logplay.PlayerLogData.Id].State = KnowTheSolution
+					k = &GameResponseKnowSolution{PlayerKnowSolution, logplay.PlayerLogData.Id}
+				} else {
+					r.Players[last].State = LastPlayer
+					k = &GameResponseLastPlayer{GetLastPlayer, last}
+				}
+				res, err := json.Marshal(k)
+				if err != nil {
+					continue
+					// return
+				}
+				msg = res
+			case AnswerTheQuestion:
+				if logplay.PlayerLogData.Id == 0 && logplay.PlayerLogData.Key == "" {
+					continue
+				}
+
+				if r.Players[logplay.PlayerLogData.Id].State != LastPlayer {
+					continue
+				}
+				log := &GameResponseWrongAnswer{KeyCorrect, logplay.PlayerLogData.Id}
+				if services.EvaluateFormula(logplay.PlayerLogData.Key) != nil {
+					log = &GameResponseWrongAnswer{KeyUncorrect, logplay.PlayerLogData.Id}
+
+				}
+				res, err := json.Marshal(log)
+				if err != nil {
+					continue
+					// return
+				}
+				msg = res
+			case ClaimUnresolve:
+			default:
+				continue
 			}
+
 			for _, player := range r.Players {
 				select {
-				case player.Send <- logplay:
+				case player.Send <- msg:
 				default:
 					// log.Println("uhuy")
 					close(player.Send)
@@ -77,8 +145,15 @@ func (r *Room) Run() {
 	}
 }
 
-// func Uint64() uint64 {
-// 	buf := make([]byte, 8)
-// 	rand.Read(buf) // Always succeeds, no need to check error
-// 	return binary.LittleEndian.Uint64(buf)
-// }
+func checkLastPlayer(r *Room) (uint, int) {
+	var last []uint
+	for _, v := range r.Players {
+		if v.State != KnowTheSolution {
+			last = append(last, v.Id)
+		}
+	}
+	if len(last) == 1 {
+		return last[0], len(last)
+	}
+	return 0, len(last)
+}
