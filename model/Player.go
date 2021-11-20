@@ -59,7 +59,7 @@ func (u *Player) ReadPlayerUpdate() {
 			// 	continue
 			// }
 			// u.State = KnowTheSolution
-			if u.Room.Status != WaitingPlayerClaim || u.State == Thinking {
+			if u.Room.Status != WaitingPlayerClaim || u.State != Thinking {
 				continue
 			}
 			u.Room.Broadcast <- &UserRequest{ClaimSolution, &PlayerLogData{u.Id, ""}, nil}
@@ -106,12 +106,12 @@ func (u *Player) WritePlayerUpdate() {
 			// 	// break
 			// }
 			// log.Println(p)
-			que := len(u.Send)
+			// que := len(u.Send)
 			// log.Println(que)
-			for i := 0; i < que; i++ {
-				w.Write([]byte("/n"))
-				w.Write(<-u.Send)
-			}
+			// for i := 0; i < que; i++ {
+			// 	w.Write([]byte("/n"))
+			// 	w.Write(<-u.Send)
+			// }
 			if err := w.Close(); err != nil {
 				return
 			}

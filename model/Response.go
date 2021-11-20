@@ -11,13 +11,13 @@ const (
 	KeyUncorrect
 	FalseUnresolve
 	PointIncrease
-	AFK
 	PlayerJoining
 	PlayerKnowSolution
 	PostQuestion
 	GetLastPlayer
 	PostPointedPlayer
 	WaitingPointedPlayer
+	AFK
 )
 const (
 	NewQuestion = iota
@@ -61,23 +61,7 @@ type GameResponseNewQuestion struct {
 	Question *[]int
 }
 
-type GameResponseWrongAnswer struct {
-	Type int
-	Id   uint
-}
-type GameResponseLastPlayer struct {
-	Type int
-	Id   uint
-}
-type GameResponseKnowSolution struct {
-	Type int
-	Id   uint
-}
-type GameResponsePointingPlayer struct {
-	Type int
-	Id   uint
-}
-type GameResponsePointIncrease struct {
+type GameResponse struct {
 	Type int
 	Id   uint
 }

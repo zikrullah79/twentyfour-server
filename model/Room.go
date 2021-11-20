@@ -59,7 +59,7 @@ func (r *Room) Run() {
 				}
 				r.Status = NewQuestion
 				roomStatus = WaitingPlayerClaim
-				setStateToAllUser(WaitingCard, r)
+				setStateToAllUser(Thinking, r)
 				rand4Card, currCard := services.Get4Card(*card)
 				card = currCard
 				logs = append(logs, &GameResponseNewQuestion{PostQuestion, rand4Card})
@@ -73,7 +73,7 @@ func (r *Room) Run() {
 				r.Players[logplay.PlayerLogData.Id].State = PlayerPointed
 				pointedPlayer = r.Players[logplay.PlayerLogData.Id]
 				roomStatus = WaitingPointedPlayer
-				logs = append(logs, &GameResponsePointingPlayer{PostPointedPlayer, pointedPlayer.Id})
+				logs = append(logs, &GameResponse{PostPointedPlayer, pointedPlayer.Id})
 			case ClaimSolution:
 				if logplay.PlayerLogData.Id == 0 {
 					continue
@@ -81,7 +81,7 @@ func (r *Room) Run() {
 
 				if _, count := checkLastPlayer(r); count > 1 {
 					r.Players[logplay.PlayerLogData.Id].State = KnowTheSolution
-					logs = append(logs, &GameResponseKnowSolution{PlayerKnowSolution, logplay.PlayerLogData.Id})
+					logs = append(logs, &GameResponse{PlayerKnowSolution, logplay.PlayerLogData.Id})
 				}
 
 				if last, count := checkLastPlayer(r); count == 1 {
@@ -89,7 +89,7 @@ func (r *Room) Run() {
 					lastPlayer = r.Players[last]
 					// r.Status = LastPlayerFound
 					roomStatus = LastPlayerFound
-					logs = append(logs, &GameResponseLastPlayer{GetLastPlayer, last})
+					logs = append(logs, &GameResponse{GetLastPlayer, last})
 				}
 			case AnswerTheQuestion:
 				if (logplay.PlayerLogData.Id == 0 && logplay.PlayerLogData.Key == "") || r.Status != WaitingPointedPlayer {
@@ -103,16 +103,16 @@ func (r *Room) Run() {
 				if services.EvaluateFormula(logplay.PlayerLogData.Key) != nil {
 					// keyType = KeyUncorrect
 					pointedPlayer.Point -= 4
-					logs = append(logs, &GameResponsePointIncrease{PointIncrease, pointedPlayer.Id})
+					logs = append(logs, &GameResponse{PointIncrease, pointedPlayer.Id})
 				} else {
 					lastPlayer.Point -= 4
-					logs = append(logs, &GameResponsePointIncrease{PointIncrease, lastPlayer.Id})
+					logs = append(logs, &GameResponse{PointIncrease, lastPlayer.Id})
 				}
 				// logs = append(logs, &GameResponseWrongAnswer{keyType, logplay.PlayerLogData.Id})
 
 				r.Status = NewQuestion
 				roomStatus = WaitingPlayerClaim
-				setStateToAllUser(WaitingCard, r)
+				setStateToAllUser(Thinking, r)
 				rand4Card, currCard := services.Get4Card(*card)
 				card = currCard
 				logs = append(logs, &GameResponseNewQuestion{PostQuestion, rand4Card})
