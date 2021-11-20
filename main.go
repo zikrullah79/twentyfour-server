@@ -16,6 +16,7 @@ func main() {
 
 	router.GET("/join", play.Join)
 	router.GET("/leaderboard", play.GetLeaderboard)
+	router.POST("/leaderboard", play.PostLeaderboard)
 	router.POST("/create")
 	router.Run()
 }

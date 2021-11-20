@@ -62,8 +62,23 @@ func GetLeaderboard(c *gin.Context) {
 	leaderboard, err := model.FindLeaderboard(redisClient, mongoClient, bson.D{})
 
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 	}
 
 	c.IndentedJSON(http.StatusOK, leaderboard)
+}
+
+func PostLeaderboard(c *gin.Context) {
+	body, err := c.GetRawData()
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		log.Fatal(err)
+	}
+
+	message, err := model.InsertLeaderboard(body, redisClient, mongoClient)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": message})
 }
