@@ -41,24 +41,15 @@ func (u *Player) ReadPlayerUpdate() {
 			if u.PlayerType != RoomMaster || u.Room.Status != GameNotStarted {
 				continue
 			}
-			// SetStateToAllUser(WaitingCard, u.Room)
 
 			u.Room.Broadcast <- &UserRequest{StartGame, nil, nil}
-			// log.Printf("Game Started by %v", u.PlayerType)
 
 		case PlayerPointing:
 			if p.PlayerLogData == nil || u.State != LastPlayer {
 				continue
 			}
 			u.Room.Broadcast <- &UserRequest{PlayerPointing, &PlayerLogData{p.PlayerLogData.Id, ""}, nil}
-			// if p, ok := u.Room.Players[p.PlayerLogData.Id]; !ok {
-			// 	p.State = PlayerPointed
-			// }
 		case ClaimSolution:
-			// if u.State != Thinking {
-			// 	continue
-			// }
-			// u.State = KnowTheSolution
 			if u.Room.Status != WaitingPlayerClaim || u.State != Thinking {
 				continue
 			}
@@ -72,9 +63,6 @@ func (u *Player) ReadPlayerUpdate() {
 
 			u.Room.Broadcast <- &UserRequest{AnswerTheQuestion, &PlayerLogData{u.Id, p.PlayerLogData.Key}, nil}
 		}
-		// log.Println(p.Type)
-		// log.Println(msg)
-		// u.Room.Broadcast <- bytes.TrimSpace(msg)
 	}
 }
 

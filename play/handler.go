@@ -56,9 +56,7 @@ func Join(c *gin.Context, r *model.Room) {
 		Room:       r,
 		Send:       make(chan []byte, 256),
 	}
-	// log.Printf("%v room", &r)
-	log.Printf("%v room", r.Players)
-	// log.Printf("%v joined", newPlayer.Id)
+
 	newPlayer.Room.Register <- newPlayer
 	go newPlayer.WritePlayerUpdate()
 	go newPlayer.ReadPlayerUpdate()

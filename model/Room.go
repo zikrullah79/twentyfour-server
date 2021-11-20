@@ -99,16 +99,14 @@ func (r *Room) Run() {
 				if r.Players[logplay.PlayerLogData.Id].State != PlayerPointed {
 					continue
 				}
-				// keyType := KeyCorrect
+
 				if services.EvaluateFormula(logplay.PlayerLogData.Key) != nil {
-					// keyType = KeyUncorrect
 					pointedPlayer.Point -= 4
 					logs = append(logs, &GameResponse{PointIncrease, pointedPlayer.Id})
 				} else {
 					lastPlayer.Point -= 4
 					logs = append(logs, &GameResponse{PointIncrease, lastPlayer.Id})
 				}
-				// logs = append(logs, &GameResponseWrongAnswer{keyType, logplay.PlayerLogData.Id})
 
 				r.Status = NewQuestion
 				roomStatus = WaitingPlayerClaim
@@ -129,16 +127,6 @@ func (r *Room) Run() {
 			}
 			r.Status = roomStatus
 			broadcastMessage(res, r)
-			// for _, player := range r.Players {
-			// 	select {
-			// 	case player.Send <- msg:
-			// 	default:
-			// 		// log.Println("uhuy")
-			// 		close(player.Send)
-			// 		delete(r.Players, player.Id)
-			// 	}
-
-			// }
 		}
 	}
 }
