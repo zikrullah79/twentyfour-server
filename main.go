@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	play.ConnectMongodb()
+	play.ConnectDb()
 	router := gin.Default()
 
 	router.Use(

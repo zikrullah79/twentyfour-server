@@ -2,6 +2,7 @@ package play
 
 import (
 	"context"
+	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -16,14 +17,22 @@ import (
 
 var Upgrader = websocket.Upgrader{}
 var mongoClient *mongo.Client
+var redisClient *redis.Client
 
-func ConnectMongodb() {
+func ConnectDb() {
 	mongoClient = db.GetMongoClient()
 	err := mongoClient.Ping(context.Background(), readpref.Primary())
 	if err != nil {
-		log.Fatal("Couldn't connect to the database", err)
+		log.Fatal("Couldn't connect to the mongo database", err)
 	} else {
-		log.Println("Connected")
+		log.Println("Connected to Mongodb")
+	}
+
+	redisClient, err = db.RedisCl()
+	if err != nil {
+		log.Fatal("Couldn't connect to the redis database", err)
+	} else {
+		log.Println("Connected to Redis")
 	}
 }
 
@@ -50,9 +59,11 @@ func Join(c *gin.Context) {
 }
 
 func GetLeaderboard(c *gin.Context) {
-	leaderboard, err := model.FindLeaderboard(mongoClient, bson.D{})
-	if err != nil{
+	leaderboard, err := model.FindLeaderboard(redisClient, mongoClient, bson.D{})
+
+	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Bad Request"})
 	}
+
 	c.IndentedJSON(http.StatusOK, leaderboard)
 }

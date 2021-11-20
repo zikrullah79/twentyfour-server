@@ -2,9 +2,14 @@ package model
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log"
+	"time"
+	"twentyfour.com/server/util"
 )
 
 type Leaderboard struct {
@@ -13,49 +18,52 @@ type Leaderboard struct {
 	Score     int64  `json:"score"`
 }
 
-func FindLeaderboard(client *mongo.Client, filter bson.D) ([]*Leaderboard, error) {
+func FindLeaderboard(redisClient *redis.Client, client *mongo.Client, filter bson.D) ([]*Leaderboard, error) {
 	var leaderboard []*Leaderboard
-	collection := client.Database("config").Collection("leaderboard")
-
-	cur, err := collection.Find(context.TODO(), filter)
+	leaderboardString, err := redisClient.Get(context.TODO(), util.LeaderboardRedisKey).Result()
+	fmt.Printf("leaderboardstring %s\n", leaderboardString)
 	if err != nil {
-		log.Fatal("Error on Finding all the documents", err)
-		return nil, err
-	}
+		if err == redis.Nil || leaderboardString == "" {
+			fmt.Println("disini")
+			collection := client.Database("config").Collection("leaderboard")
 
-	for cur.Next(context.TODO()) {
-		var board Leaderboard
-		err = cur.Decode(&board)
-		if err != nil {
-			log.Fatal("Error on Decoding the document", err)
+			cur, err := collection.Find(context.TODO(), filter)
+			if err != nil {
+				log.Fatal("Error on Finding all the documents", err)
+				return nil, err
+			}
+
+			for cur.Next(context.TODO()) {
+				var board Leaderboard
+				err = cur.Decode(&board)
+				if err != nil {
+					log.Fatal("Error on Decoding the document", err)
+					return nil, err
+				}
+
+				leaderboard = append(leaderboard, &board)
+			}
+
+			jsonLeaderboard, err := json.Marshal(leaderboard)
+			if err != nil {
+				return nil, err
+			}
+
+			err = redisClient.Set(context.TODO(), util.LeaderboardRedisKey, string(jsonLeaderboard), 24*time.Hour).Err()
+			if err != nil {
+				return nil, err
+			}
+
+			return leaderboard, nil
+		} else {
 			return nil, err
 		}
+	}
 
-		leaderboard = append(leaderboard, &board)
+	err = json.Unmarshal([]byte(leaderboardString), &leaderboard)
+	if err != nil {
+		return nil, err
 	}
 
 	return leaderboard, nil
 }
-
-//func InsertLeaderboard(client *mongo.Client, leaderboard []interface{}) interface{} {
-//	collection := client.Database("config").Collection("leaderboard")
-//
-//	result, err := collection.InsertMany(context.TODO(), leaderboard)
-//
-//	cur, err := collection.Find(context.TODO(), filter)
-//	if err != nil {
-//		log.Fatal("Error on Finding all the documents", err)
-//	}
-//
-//	for cur.Next(context.TODO()) {
-//		var board Leaderboard
-//		err = cur.Decode(&board)
-//		if err != nil {
-//			log.Fatal("Error on Decoding the document", err)
-//		}
-//
-//		leaderboard = append(leaderboard, &board)
-//	}
-//
-//	return leaderboard
-//}
