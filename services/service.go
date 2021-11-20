@@ -16,9 +16,9 @@ func GetCardSet() *[]int {
 	var set []int
 	for i := 1; i < 10; i++ {
 		set = append(set, i)
-		set = append(set, i)
-		set = append(set, i)
-		set = append(set, i)
+		// set = append(set, i)
+		// set = append(set, i)
+		// set = append(set, i)
 	}
 	return &set
 }

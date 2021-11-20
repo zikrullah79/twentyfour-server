@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
+	"sort"
 
 	"twentyfour.com/server/services"
 )
@@ -107,13 +108,20 @@ func (r *Room) Run() {
 					lastPlayer.Point -= 4
 					logs = append(logs, &GameResponse{PointIncrease, lastPlayer.Id})
 				}
+				if len(*card) > 4 {
+					r.Status = NewQuestion
+					roomStatus = WaitingPlayerClaim
+					setStateToAllUser(Thinking, r)
+					rand4Card, currCard := services.Get4Card(*card)
+					card = currCard
+					logs = append(logs, &GameResponseNewQuestion{PostQuestion, rand4Card})
+				} else {
+					r.Status = GameStopped
+					roomStatus = GameStopped
+					setStateToAllUser(WaitingResult, r)
+					logs = append(logs, &GameResponseEndGame{EndGame, SortByPoint(r)})
+				}
 
-				r.Status = NewQuestion
-				roomStatus = WaitingPlayerClaim
-				setStateToAllUser(Thinking, r)
-				rand4Card, currCard := services.Get4Card(*card)
-				card = currCard
-				logs = append(logs, &GameResponseNewQuestion{PostQuestion, rand4Card})
 			case ClaimUnresolve:
 			default:
 				continue
@@ -160,6 +168,21 @@ func setStateToAllUser(state int, room *Room) {
 	for _, v := range room.Players {
 		v.State = state
 	}
+}
+
+type Players []*FinalResult
+
+func (p Players) Len() int           { return len(p) }
+func (p Players) Less(i, j int) bool { return p[i].Point < p[j].Point }
+func (p Players) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+func SortByPoint(r *Room) []*FinalResult {
+	var players Players
+	for _, v := range r.Players {
+		players = append(players, &FinalResult{Id: v.Id, Point: v.Point})
+	}
+	sort.Sort(players)
+	return players
 }
 
 // func getLastPlayer(r *Room) *Player {

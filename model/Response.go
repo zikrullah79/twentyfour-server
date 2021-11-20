@@ -41,6 +41,7 @@ const (
 	Thinking
 	Unresolve
 	WaitingCard
+	WaitingResult
 )
 
 type UserRequest struct {
@@ -64,4 +65,12 @@ type GameResponseNewQuestion struct {
 type GameResponse struct {
 	Type int
 	Id   uint
+}
+type GameResponseEndGame struct {
+	Type   int
+	Result []*FinalResult
+}
+type FinalResult struct {
+	Id    uint
+	Point float64
 }
