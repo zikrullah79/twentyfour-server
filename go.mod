@@ -3,10 +3,11 @@ module twentyfour.com/server
 go 1.17
 
 require (
+	github.com/Knetic/govaluate v3.0.0+incompatible
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-redis/redis/v8 v8.11.4
-	github.com/gomodule/redigo v1.8.3
 	github.com/gorilla/websocket v1.4.2
+	github.com/shogo82148/go-shuffle v1.0.0
 	go.mongodb.org/mongo-driver v1.7.4
 )
 
