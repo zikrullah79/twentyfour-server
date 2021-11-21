@@ -136,6 +136,10 @@ func (r *Room) Run() {
 			}
 			r.Status = roomStatus
 			broadcastMessage(res, r)
+
+			if r.Status == GameStopped {
+				return
+			}
 		}
 	}
 }
