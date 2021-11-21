@@ -13,6 +13,7 @@ func main() {
 	play.ConnectDb()
 	router := gin.Default()
 	rooms := make(map[uint64]*model.Room)
+	go model.CleanFinishedRoom(rooms)
 	router.GET("/join/:roomid", func(c *gin.Context) {
 		rid, err := strconv.Atoi(c.Param("roomid"))
 		if err != nil {
