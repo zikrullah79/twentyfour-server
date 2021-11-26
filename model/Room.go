@@ -43,11 +43,29 @@ func (r *Room) Run() {
 		case player := <-r.Register:
 			if len(r.Players) < 8 {
 				r.Players[player.Id] = player
+
+				res, err := json.Marshal(&GameResponse{PlayerJoining, player.Id})
+				if err != nil {
+					continue
+				}
+				broadcastMessage(res, r)
 			}
+
 		case player := <-r.Unregister:
+			var logs []interface{}
 			if _, ok := r.Players[player.Id]; ok {
 				delete(r.Players, player.Id)
 				close(player.Send)
+				logs = append(logs, &GameResponse{PlayerLeave, player.Id})
+				if len(r.Players) < 2 {
+					logs = append(logs, &GameResponse{PausingGame, player.Id})
+				}
+				res, err := json.Marshal(logs)
+				if err != nil {
+					continue
+				}
+				r.Status = GamePaused
+				broadcastMessage(res, r)
 			}
 
 		case logplay := <-r.Broadcast:

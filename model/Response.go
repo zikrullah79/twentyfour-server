@@ -17,7 +17,8 @@ const (
 	GetLastPlayer
 	PostPointedPlayer
 	WaitingPointedPlayer
-	AFK
+	PlayerLeave
+	PausingGame
 )
 const (
 	NewQuestion = iota
@@ -25,6 +26,7 @@ const (
 	GameNotStarted
 	LastPlayerFound
 	WaitingPlayerClaim
+	GamePaused
 )
 const (
 	PlayerPointing = iota
