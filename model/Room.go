@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"sort"
+	"time"
 
 	"twentyfour.com/server/services"
 )
@@ -153,6 +154,10 @@ func (r *Room) Run() {
 			}
 			r.Status = roomStatus
 			broadcastMessage(res, r)
+
+			if r.Status == GameStopped {
+				return
+			}
 		}
 	}
 }
@@ -201,6 +206,27 @@ func SortByPoint(r *Room) []*FinalResult {
 	}
 	sort.Sort(players)
 	return players
+}
+func CleanFinishedRoom(r map[uint64]*Room) {
+	ticker := time.NewTicker(600 * time.Second)
+	defer func() {
+		ticker.Stop()
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			for _, v := range r {
+				if v.Status == GameStopped {
+					log.Println(v)
+					delete(r, v.Id)
+
+				}
+			}
+		default:
+			continue
+		}
+	}
 }
 
 // func getLastPlayer(r *Room) *Player {

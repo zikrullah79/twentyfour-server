@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
@@ -13,6 +14,7 @@ func main() {
 	play.ConnectDb()
 	router := gin.Default()
 	rooms := make(map[uint64]*model.Room)
+	go model.CleanFinishedRoom(rooms)
 	router.GET("/join/:roomid", func(c *gin.Context) {
 		rid, err := strconv.Atoi(c.Param("roomid"))
 		if err != nil {
@@ -45,7 +47,11 @@ func main() {
 	// log.Printf("4 cards : %v , current card set : %v", c4rd, cards)
 	// log.Println(model.FalseUnresolve)
 	// log.Print(services.EvaluateFormula("(8 * 3) * 1 * 2"))
+	router.GET("/", Handler)
 	router.GET("/leaderboard", play.GetLeaderboard)
 	router.POST("/leaderboard", play.PostLeaderboard)
 	router.Run()
+}
+func Handler(c *gin.Context) {
+	fmt.Fprintf(c.Writer, "<h1>Hello from Go!</h1>")
 }
